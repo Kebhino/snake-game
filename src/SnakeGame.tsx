@@ -17,7 +17,11 @@ const SnakeGame = () => {
   const [food, setFood] = useState(initialFood);
   const [direction, setDirection] = useState<[number, number]>([0, 1]);
   const [gameOver, setGameOver] = useState(false);
-  const [score, setScore] = useState(0);
+  const [score, setScore] = useState(
+    () => Number(localStorage.getItem("snake-score")) || 0
+  );
+  const [speed, setSpeed] = useState(200);
+  const [difficulty, setDifficulty] = useState("normal");
   const moveRef = useRef(direction);
 
   const [playPop] = useSound(popSfx);
@@ -29,6 +33,7 @@ const SnakeGame = () => {
     setDirection([0, 1]);
     setGameOver(false);
     setScore(0);
+    localStorage.setItem("snake-score", "0");
   };
 
   useEffect(() => {
@@ -55,6 +60,10 @@ const SnakeGame = () => {
   useEffect(() => {
     moveRef.current = direction;
   }, [direction]);
+
+  useEffect(() => {
+    localStorage.setItem("snake-score", String(score));
+  }, [score]);
 
   useEffect(() => {
     if (gameOver) return;
@@ -88,9 +97,25 @@ const SnakeGame = () => {
         }
         return newSnake;
       });
-    }, 200);
+    }, speed);
     return () => clearInterval(interval);
-  }, [food, gameOver, playPop, playGameOver]);
+  }, [food, gameOver, playPop, playGameOver, speed]);
+
+  const handleDifficultyChange = (level: string) => {
+    setDifficulty(level);
+    switch (level) {
+      case "easy":
+        setSpeed(300);
+        break;
+      case "normal":
+        setSpeed(200);
+        break;
+      case "hard":
+        setSpeed(100);
+        break;
+    }
+    restartGame();
+  };
 
   return (
     <div
@@ -102,6 +127,18 @@ const SnakeGame = () => {
     >
       <h1 style={{ fontSize: "2.5rem" }}>🐍 Snake Game</h1>
       <h2 style={{ margin: "1rem 0" }}>Score: {score}</h2>
+      <div style={{ marginBottom: "1rem" }}>
+        <label style={{ marginRight: "10px" }}>Difficulty:</label>
+        <select
+          value={difficulty}
+          onChange={(e) => handleDifficultyChange(e.target.value)}
+          style={{ padding: "0.3rem", fontSize: "1rem" }}
+        >
+          <option value="easy">Easy</option>
+          <option value="normal">Normal</option>
+          <option value="hard">Hard</option>
+        </select>
+      </div>
       {gameOver && <h2 style={{ color: "red" }}>Game Over</h2>}
       <button
         onClick={restartGame}
@@ -128,6 +165,7 @@ const SnakeGame = () => {
           border: "3px solid #333",
           padding: "5px",
           backgroundColor: "#111",
+          transition: "all 0.2s ease-in-out",
         }}
       >
         {[...Array(boardSize)].flatMap((_, row) =>
@@ -146,6 +184,7 @@ const SnakeGame = () => {
                     ? "crimson"
                     : "#333",
                   borderRadius: isFood ? "50%" : "4px",
+                  transition: "background-color 0.1s",
                 }}
               />
             );
