@@ -3,6 +3,9 @@ import React, { useState, useEffect, useRef } from "react";
 import useSound from "use-sound";
 import popSfx from "./assets/pop.mp3";
 import gameOverSfx from "./assets/gameover.mp3";
+import recordSfx from "./assets/record.mp3";
+import minecraftDirt from "./assets/kurczak.png";
+import knightIcon from "./assets/rycerz.png";
 
 const boardSize = 10;
 const initialSnake = [
@@ -10,14 +13,21 @@ const initialSnake = [
   [0, 1],
   [0, 0],
 ];
-const initialFood = [
-  Math.floor(Math.random() * 10),
-  Math.floor(Math.random() * 10),
-];
+
+const generateNewFood = (snake: number[][]): [number, number] => {
+  let newFood: [number, number];
+  do {
+    newFood = [
+      Math.floor(Math.random() * boardSize),
+      Math.floor(Math.random() * boardSize),
+    ];
+  } while (snake.some(([x, y]) => x === newFood[0] && y === newFood[1]));
+  return newFood;
+};
 
 const SnakeGame = () => {
   const [snake, setSnake] = useState(initialSnake);
-  const [food, setFood] = useState(initialFood);
+  const [food, setFood] = useState(generateNewFood(initialSnake));
   const [direction, setDirection] = useState<[number, number]>([0, 1]);
   const [gameOver, setGameOver] = useState(false);
   const [score, setScore] = useState(
@@ -28,18 +38,30 @@ const SnakeGame = () => {
   );
   const [speed, setSpeed] = useState(200);
   const [difficulty, setDifficulty] = useState("normal");
+  const [newHighScore, setNewHighScore] = useState(false);
+  const [pendingHighScore, setPendingHighScore] = useState(false);
+  const gameAreaRef = useRef<HTMLDivElement>(null);
   const moveRef = useRef(direction);
 
   const [playPop] = useSound(popSfx);
   const [playGameOver] = useSound(gameOverSfx);
+  const [playRecord] = useSound(recordSfx);
+
+  const showEasterEgg = difficulty === "dla Olisia";
 
   const restartGame = () => {
-    setSnake(initialSnake);
-    setFood(initialFood);
+    const newSnake = initialSnake;
+    setSnake(newSnake);
+    const newFood = generateNewFood(newSnake);
+    setFood(newFood);
     setDirection([0, 1]);
+    moveRef.current = [0, 1];
     setGameOver(false);
     setScore(0);
+    setNewHighScore(false);
+    setPendingHighScore(false);
     localStorage.setItem("snake-score", "0");
+    setTimeout(() => gameAreaRef.current?.focus(), 0);
   };
 
   const changeDirection = (newDir: [number, number]) => {
@@ -48,7 +70,8 @@ const SnakeGame = () => {
       (newDir[1] === -moveRef.current[1] && newDir[1] !== 0)
     )
       return;
-    setDirection(newDir);
+    moveRef.current = newDir;
+    setTimeout(() => setDirection(newDir), 0);
   };
 
   useEffect(() => {
@@ -80,113 +103,88 @@ const SnakeGame = () => {
     localStorage.setItem("snake-score", String(score));
     if (score > highScore) {
       setHighScore(score);
+      setPendingHighScore(true);
       localStorage.setItem("snake-highscore", String(score));
     }
   }, [score, highScore]);
 
   useEffect(() => {
+    if (!gameOver || !pendingHighScore) return;
+    playRecord();
+    setNewHighScore(true);
+    setPendingHighScore(false);
+  }, [gameOver, pendingHighScore, playRecord]);
+
+  useEffect(() => {
     if (gameOver) return;
     const interval = setInterval(() => {
-      setSnake((prev) => {
+      setSnake((prevSnake) => {
         const newHead = [
-          prev[0][0] + moveRef.current[0],
-          prev[0][1] + moveRef.current[1],
+          (prevSnake[0][0] + moveRef.current[0] + boardSize) % boardSize,
+          (prevSnake[0][1] + moveRef.current[1] + boardSize) % boardSize,
         ];
-        if (
-          newHead[0] < 0 ||
-          newHead[1] < 0 ||
-          newHead[0] >= boardSize ||
-          newHead[1] >= boardSize ||
-          prev.some(([x, y]) => x === newHead[0] && y === newHead[1])
-        ) {
+
+        const isFoodEaten = newHead[0] === food[0] && newHead[1] === food[1];
+        const newSnake = [newHead, ...prevSnake];
+
+        if (prevSnake.some(([x, y]) => x === newHead[0] && y === newHead[1])) {
           setGameOver(true);
           playGameOver();
-          return prev;
+          return prevSnake;
         }
-        const newSnake = [newHead, ...prev];
-        if (newHead[0] === food[0] && newHead[1] === food[1]) {
+
+        if (isFoodEaten) {
           setScore((s) => s + 1);
-          setFood([
-            Math.floor(Math.random() * boardSize),
-            Math.floor(Math.random() * boardSize),
-          ]);
+          setTimeout(() => setFood(generateNewFood(newSnake)), 0);
           playPop();
+          return newSnake;
         } else {
           newSnake.pop();
+          return newSnake;
         }
-        return newSnake;
       });
     }, speed);
     return () => clearInterval(interval);
   }, [food, gameOver, playPop, playGameOver, speed]);
 
-  const handleDifficultyChange = (level: string) => {
-    setDifficulty(level);
-    switch (level) {
-      case "easy":
-        setSpeed(300);
-        break;
-      case "normal":
-        setSpeed(200);
-        break;
-      case "hard":
-        setSpeed(100);
-        break;
-      case "dla Olisia":
-        setSpeed(90);
-        break;
-    }
-    restartGame();
-  };
-
-  const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-
   return (
     <div
+      ref={gameAreaRef}
+      tabIndex={0}
       style={{
+        outline: "none",
         textAlign: "center",
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Comic Sans MS, Arial",
         padding: "1rem",
-        background: "linear-gradient(to bottom, #1a1a1a, #000)",
+        background: showEasterEgg ? "#1a472a" : "#1a1a1a",
         minHeight: "100vh",
         color: "#fff",
       }}
     >
       <h1 style={{ fontSize: "2.5rem" }}>🐍 Snake Game</h1>
-      <h2 style={{ margin: "0.5rem 0" }}>Score: {score}</h2>
-      <h3 style={{ marginBottom: "1rem" }}>High Score: {highScore}</h3>
+      {showEasterEgg && (
+        <h2 style={{ fontSize: "1.8rem", color: "#FFD700" }}>
+          ✨ Tryb Minecraft dla Olisia! ⛏️✨
+        </h2>
+      )}
+      <h2>Score: {score}</h2>
+      <h3>High Score: {highScore}</h3>
 
       <div style={{ marginBottom: "1rem" }}>
-        <label style={{ marginRight: "10px" }}>Difficulty:</label>
+        <label>Difficulty:</label>{" "}
         <select
           value={difficulty}
-          onChange={(e) => handleDifficultyChange(e.target.value)}
-          style={{ padding: "0.3rem", fontSize: "1rem" }}
+          onChange={(e) => setDifficulty(e.target.value)}
         >
           <option value="easy">Easy</option>
           <option value="normal">Normal</option>
           <option value="hard">Hard</option>
-          <option value="dla Olisia">Dla Olisia</option>
+          <option value="dla Olisia">dla Olisia</option>
         </select>
+        <button onClick={restartGame} style={{ marginLeft: "1rem" }}>
+          Restart
+        </button>
       </div>
-
-      {gameOver && <h2 style={{ color: "red" }}>Game Over</h2>}
-
-      <button
-        onClick={restartGame}
-        style={{
-          padding: "0.5rem 1rem",
-          marginBottom: "1rem",
-          fontSize: "1rem",
-          backgroundColor: "#4CAF50",
-          color: "white",
-          border: "none",
-          borderRadius: "5px",
-          cursor: "pointer",
-        }}
-      >
-        Restart
-      </button>
 
       <div
         style={{
@@ -194,97 +192,84 @@ const SnakeGame = () => {
           gridTemplateColumns: `repeat(${boardSize}, 24px)`,
           justifyContent: "center",
           gap: "2px",
-          border: "3px solid #333",
-          padding: "5px",
-          backgroundColor: "#111",
-          transition: "all 0.2s ease-in-out",
+          marginBottom: "1rem",
+          border: "4px solid #4CAF50",
+          padding: "4px",
+          backgroundColor: showEasterEgg ? "#3c4b33" : "#333",
           boxShadow: "0 0 20px #4CAF50",
-          marginBottom: "2rem",
         }}
       >
         {[...Array(boardSize)].flatMap((_, row) =>
           [...Array(boardSize)].map((_, col) => {
             const isSnake = snake.some(([x, y]) => x === row && y === col);
-            const isFood = food[0] === row && food[1] === col;
-            return (
-              <div
-                key={`${row}-${col}`}
-                style={{
+            const isHead = snake[0][0] === row && snake[0][1] === col;
+            const isFoodCell = food[0] === row && food[1] === col;
+
+            const style: React.CSSProperties = isFoodCell
+              ? showEasterEgg
+                ? {
+                    width: 24,
+                    height: 24,
+                    backgroundImage: `url(${minecraftDirt})`,
+                    backgroundSize: "cover",
+                    borderRadius: "4px",
+                  }
+                : {
+                    width: 24,
+                    height: 24,
+                    backgroundColor: "crimson",
+                    borderRadius: "50%",
+                  }
+              : isHead
+              ? showEasterEgg
+                ? {
+                    width: 24,
+                    height: 24,
+                    backgroundImage: `url(${knightIcon})`,
+                    backgroundSize: "cover",
+                    borderRadius: "4px",
+                  }
+                : {
+                    width: 24,
+                    height: 24,
+                    backgroundColor: "limegreen",
+                    borderRadius: "4px",
+                  }
+              : isSnake
+              ? {
                   width: 24,
                   height: 24,
-                  backgroundColor: isSnake
-                    ? "limegreen"
-                    : isFood
-                    ? "crimson"
-                    : "#222",
-                  borderRadius: isFood ? "50%" : "4px",
-                  transition: "background-color 0.1s",
-                  animation: isFood ? "pulse 1s infinite ease-in-out" : "none",
-                }}
-              />
-            );
+                  backgroundColor: showEasterEgg ? "#5e7c16" : "limegreen",
+                  borderRadius: "4px",
+                }
+              : {
+                  width: 24,
+                  height: 24,
+                  backgroundColor: showEasterEgg ? "#8b9a77" : "#444",
+                  borderRadius: "4px",
+                };
+
+            return <div key={`${row}-${col}`} style={style} />;
           })
         )}
       </div>
 
-      {/* D-pad for mobile only */}
-      {isMobile && (
+      {newHighScore && (
         <div
           style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "10px",
+            marginTop: "1rem",
+            backgroundColor: "#FFD700",
+            color: "#000",
+            padding: "10px",
+            borderRadius: "10px",
+            fontWeight: "bold",
           }}
         >
-          <button
-            onClick={() => changeDirection([-1, 0])}
-            style={dpadButtonStyle}
-          >
-            ⬆️
-          </button>
-          <div style={{ display: "flex", gap: "10px" }}>
-            <button
-              onClick={() => changeDirection([0, -1])}
-              style={dpadButtonStyle}
-            >
-              ⬅️
-            </button>
-            <button
-              onClick={() => changeDirection([1, 0])}
-              style={dpadButtonStyle}
-            >
-              ⬇️
-            </button>
-            <button
-              onClick={() => changeDirection([0, 1])}
-              style={dpadButtonStyle}
-            >
-              ➡️
-            </button>
-          </div>
+          🏆 Nowy rekord! 🏆
         </div>
       )}
-
-      <style>{`
-        @keyframes pulse {
-          0% { transform: scale(1); opacity: 1; }
-          50% { transform: scale(1.2); opacity: 0.7; }
-          100% { transform: scale(1); opacity: 1; }
-        }
-      `}</style>
     </div>
   );
-};
-
-const dpadButtonStyle: React.CSSProperties = {
-  padding: "10px 20px",
-  fontSize: "1.5rem",
-  backgroundColor: "#4CAF50",
-  color: "white",
-  border: "none",
-  borderRadius: "10px",
-  cursor: "pointer",
 };
 
 export default SnakeGame;
