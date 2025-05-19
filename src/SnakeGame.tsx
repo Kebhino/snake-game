@@ -39,20 +39,29 @@ const SnakeGame = () => {
     localStorage.setItem("snake-score", "0");
   };
 
+  const changeDirection = (newDir: [number, number]) => {
+    if (
+      (newDir[0] === -moveRef.current[0] && newDir[0] !== 0) ||
+      (newDir[1] === -moveRef.current[1] && newDir[1] !== 0)
+    )
+      return;
+    setDirection(newDir);
+  };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
         case "ArrowUp":
-          if (moveRef.current[0] !== 1) setDirection([-1, 0]);
+          changeDirection([-1, 0]);
           break;
         case "ArrowDown":
-          if (moveRef.current[0] !== -1) setDirection([1, 0]);
+          changeDirection([1, 0]);
           break;
         case "ArrowLeft":
-          if (moveRef.current[1] !== 1) setDirection([0, -1]);
+          changeDirection([0, -1]);
           break;
         case "ArrowRight":
-          if (moveRef.current[1] !== -1) setDirection([0, 1]);
+          changeDirection([0, 1]);
           break;
       }
     };
@@ -181,6 +190,7 @@ const SnakeGame = () => {
           backgroundColor: "#111",
           transition: "all 0.2s ease-in-out",
           boxShadow: "0 0 20px #4CAF50",
+          marginBottom: "2rem",
         }}
       >
         {[...Array(boardSize)].flatMap((_, row) =>
@@ -208,6 +218,43 @@ const SnakeGame = () => {
         )}
       </div>
 
+      {/* D-pad for mobile */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "10px",
+        }}
+      >
+        <button
+          onClick={() => changeDirection([-1, 0])}
+          style={dpadButtonStyle}
+        >
+          ⬆️
+        </button>
+        <div style={{ display: "flex", gap: "10px" }}>
+          <button
+            onClick={() => changeDirection([0, -1])}
+            style={dpadButtonStyle}
+          >
+            ⬅️
+          </button>
+          <button
+            onClick={() => changeDirection([1, 0])}
+            style={dpadButtonStyle}
+          >
+            ⬇️
+          </button>
+          <button
+            onClick={() => changeDirection([0, 1])}
+            style={dpadButtonStyle}
+          >
+            ➡️
+          </button>
+        </div>
+      </div>
+
       <style>{`
         @keyframes pulse {
           0% { transform: scale(1); opacity: 1; }
@@ -217,6 +264,16 @@ const SnakeGame = () => {
       `}</style>
     </div>
   );
+};
+
+const dpadButtonStyle: React.CSSProperties = {
+  padding: "10px 20px",
+  fontSize: "1.5rem",
+  backgroundColor: "#4CAF50",
+  color: "white",
+  border: "none",
+  borderRadius: "10px",
+  cursor: "pointer",
 };
 
 export default SnakeGame;
