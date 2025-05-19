@@ -10,7 +10,10 @@ const initialSnake = [
   [0, 1],
   [0, 0],
 ];
-const initialFood = [5, 5];
+const initialFood = [
+  Math.floor(Math.random() * 10),
+  Math.floor(Math.random() * 10),
+];
 
 const SnakeGame = () => {
   const [snake, setSnake] = useState(initialSnake);
