@@ -15,14 +15,13 @@ const initialSnake = [
 ];
 
 const generateNewFood = (snake: number[][]): [number, number] => {
-  let newFood: [number, number];
-  do {
-    newFood = [
-      Math.floor(Math.random() * boardSize),
-      Math.floor(Math.random() * boardSize),
-    ];
-  } while (snake.some(([x, y]) => x === newFood[0] && y === newFood[1]));
-  return newFood;
+  while (true) {
+    const x = Math.floor(Math.random() * boardSize);
+    const y = Math.floor(Math.random() * boardSize);
+    if (!snake.some(([sx, sy]) => sx === x && sy === y)) {
+      return [x, y];
+    }
+  }
 };
 
 const SnakeGame = () => {
@@ -74,26 +73,55 @@ const SnakeGame = () => {
     setTimeout(() => setDirection(newDir), 0);
   };
 
+  const renderMobileControls = () => (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: "10px",
+        marginTop: "20px",
+      }}
+    >
+      <button onClick={() => changeDirection([-1, 0])}>⬆️</button>
+      <div style={{ display: "flex", gap: "10px" }}>
+        <button onClick={() => changeDirection([0, -1])}>⬅️</button>
+        <button onClick={() => changeDirection([1, 0])}>⬇️</button>
+        <button onClick={() => changeDirection([0, 1])}>➡️</button>
+      </div>
+    </div>
+  );
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      switch (e.key) {
-        case "ArrowUp":
-          changeDirection([-1, 0]);
-          break;
-        case "ArrowDown":
-          changeDirection([1, 0]);
-          break;
-        case "ArrowLeft":
-          changeDirection([0, -1]);
-          break;
-        case "ArrowRight":
-          changeDirection([0, 1]);
-          break;
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+        e.preventDefault();
+        switch (e.key) {
+          case "ArrowUp":
+            changeDirection([-1, 0]);
+            break;
+          case "ArrowDown":
+            changeDirection([1, 0]);
+            break;
+          case "ArrowLeft":
+            changeDirection([0, -1]);
+            break;
+          case "ArrowRight":
+            changeDirection([0, 1]);
+            break;
+        }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  useEffect(() => {
+    if (difficulty === "easy") setSpeed(300);
+    else if (difficulty === "normal") setSpeed(200);
+    else if (difficulty === "hard") setSpeed(100);
+    else if (difficulty === "dla Olisia") setSpeed(90);
+  }, [difficulty]);
 
   useEffect(() => {
     moveRef.current = direction;
@@ -124,24 +152,25 @@ const SnakeGame = () => {
           (prevSnake[0][1] + moveRef.current[1] + boardSize) % boardSize,
         ];
 
-        const isFoodEaten = newHead[0] === food[0] && newHead[1] === food[1];
-        const newSnake = [newHead, ...prevSnake];
-
         if (prevSnake.some(([x, y]) => x === newHead[0] && y === newHead[1])) {
           setGameOver(true);
           playGameOver();
           return prevSnake;
         }
 
+        const isFoodEaten = newHead[0] === food[0] && newHead[1] === food[1];
+
+        const newSnake = isFoodEaten
+          ? [newHead, ...prevSnake]
+          : [newHead, ...prevSnake.slice(0, -1)];
+
         if (isFoodEaten) {
           setScore((s) => s + 1);
           setTimeout(() => setFood(generateNewFood(newSnake)), 0);
           playPop();
-          return newSnake;
-        } else {
-          newSnake.pop();
-          return newSnake;
         }
+
+        return newSnake;
       });
     }, speed);
     return () => clearInterval(interval);
@@ -196,7 +225,7 @@ const SnakeGame = () => {
           border: "4px solid #4CAF50",
           padding: "4px",
           backgroundColor: showEasterEgg ? "#3c4b33" : "#333",
-          boxShadow: "0 0 20px #4CAF50",
+          boxShadow: showEasterEgg ? "0 0 20px #5e7c16" : "0 0 20px #4CAF50",
         }}
       >
         {[...Array(boardSize)].flatMap((_, row) =>
@@ -234,6 +263,7 @@ const SnakeGame = () => {
                     height: 24,
                     backgroundColor: "limegreen",
                     borderRadius: "4px",
+                    boxShadow: "0 0 4px limegreen",
                   }
               : isSnake
               ? {
@@ -241,6 +271,7 @@ const SnakeGame = () => {
                   height: 24,
                   backgroundColor: showEasterEgg ? "#5e7c16" : "limegreen",
                   borderRadius: "4px",
+                  boxShadow: showEasterEgg ? undefined : "0 0 4px limegreen",
                 }
               : {
                   width: 24,
@@ -268,6 +299,8 @@ const SnakeGame = () => {
           🏆 Nowy rekord! 🏆
         </div>
       )}
+
+      {renderMobileControls()}
     </div>
   );
 };
