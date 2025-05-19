@@ -20,6 +20,9 @@ const SnakeGame = () => {
   const [score, setScore] = useState(
     () => Number(localStorage.getItem("snake-score")) || 0
   );
+  const [highScore, setHighScore] = useState(
+    () => Number(localStorage.getItem("snake-highscore")) || 0
+  );
   const [speed, setSpeed] = useState(200);
   const [difficulty, setDifficulty] = useState("normal");
   const moveRef = useRef(direction);
@@ -63,7 +66,11 @@ const SnakeGame = () => {
 
   useEffect(() => {
     localStorage.setItem("snake-score", String(score));
-  }, [score]);
+    if (score > highScore) {
+      setHighScore(score);
+      localStorage.setItem("snake-highscore", String(score));
+    }
+  }, [score, highScore]);
 
   useEffect(() => {
     if (gameOver) return;
@@ -123,10 +130,15 @@ const SnakeGame = () => {
         textAlign: "center",
         fontFamily: "Arial, sans-serif",
         padding: "1rem",
+        background: "linear-gradient(to bottom, #1a1a1a, #000)",
+        minHeight: "100vh",
+        color: "#fff",
       }}
     >
       <h1 style={{ fontSize: "2.5rem" }}>🐍 Snake Game</h1>
-      <h2 style={{ margin: "1rem 0" }}>Score: {score}</h2>
+      <h2 style={{ margin: "0.5rem 0" }}>Score: {score}</h2>
+      <h3 style={{ marginBottom: "1rem" }}>High Score: {highScore}</h3>
+
       <div style={{ marginBottom: "1rem" }}>
         <label style={{ marginRight: "10px" }}>Difficulty:</label>
         <select
@@ -139,7 +151,9 @@ const SnakeGame = () => {
           <option value="hard">Hard</option>
         </select>
       </div>
+
       {gameOver && <h2 style={{ color: "red" }}>Game Over</h2>}
+
       <button
         onClick={restartGame}
         style={{
@@ -166,6 +180,7 @@ const SnakeGame = () => {
           padding: "5px",
           backgroundColor: "#111",
           transition: "all 0.2s ease-in-out",
+          boxShadow: "0 0 20px #4CAF50",
         }}
       >
         {[...Array(boardSize)].flatMap((_, row) =>
@@ -182,15 +197,24 @@ const SnakeGame = () => {
                     ? "limegreen"
                     : isFood
                     ? "crimson"
-                    : "#333",
+                    : "#222",
                   borderRadius: isFood ? "50%" : "4px",
                   transition: "background-color 0.1s",
+                  animation: isFood ? "pulse 1s infinite ease-in-out" : "none",
                 }}
               />
             );
           })
         )}
       </div>
+
+      <style>{`
+        @keyframes pulse {
+          0% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.2); opacity: 0.7; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 };
