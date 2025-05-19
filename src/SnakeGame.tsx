@@ -132,6 +132,9 @@ const SnakeGame = () => {
       case "hard":
         setSpeed(100);
         break;
+      case "dla Olisia":
+        setSpeed(90);
+        break;
     }
     restartGame();
   };
@@ -163,6 +166,7 @@ const SnakeGame = () => {
           <option value="easy">Easy</option>
           <option value="normal">Normal</option>
           <option value="hard">Hard</option>
+          <option value="dla Olisia">Dla Olisia</option>
         </select>
       </div>
 
