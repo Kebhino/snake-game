@@ -73,24 +73,44 @@ const SnakeGame = () => {
     setTimeout(() => setDirection(newDir), 0);
   };
 
-  const renderMobileControls = () => (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: "10px",
-        marginTop: "20px",
-      }}
-    >
-      <button onClick={() => changeDirection([-1, 0])}>⬆️</button>
-      <div style={{ display: "flex", gap: "10px" }}>
-        <button onClick={() => changeDirection([0, -1])}>⬅️</button>
-        <button onClick={() => changeDirection([1, 0])}>⬇️</button>
-        <button onClick={() => changeDirection([0, 1])}>➡️</button>
+  const renderMobileControls = () => {
+    if (window.innerWidth > 768) return null; // nie pokazuj na desktopie
+
+    const buttonStyle = {
+      fontSize: "2rem",
+      padding: "1rem 1.5rem",
+      borderRadius: "12px",
+      minWidth: "60px",
+      minHeight: "60px",
+    };
+
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "10px",
+          marginTop: "20px",
+        }}
+      >
+        <button style={buttonStyle} onClick={() => changeDirection([-1, 0])}>
+          ⬆️
+        </button>
+        <div style={{ display: "flex", gap: "10px" }}>
+          <button style={buttonStyle} onClick={() => changeDirection([0, -1])}>
+            ⬅️
+          </button>
+          <button style={buttonStyle} onClick={() => changeDirection([1, 0])}>
+            ⬇️
+          </button>
+          <button style={buttonStyle} onClick={() => changeDirection([0, 1])}>
+            ➡️
+          </button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
