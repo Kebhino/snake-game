@@ -133,6 +133,8 @@ const SnakeGame = () => {
     restartGame();
   };
 
+  const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+
   return (
     <div
       style={{
@@ -218,42 +220,44 @@ const SnakeGame = () => {
         )}
       </div>
 
-      {/* D-pad for mobile */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "10px",
-        }}
-      >
-        <button
-          onClick={() => changeDirection([-1, 0])}
-          style={dpadButtonStyle}
+      {/* D-pad for mobile only */}
+      {isMobile && (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "10px",
+          }}
         >
-          ⬆️
-        </button>
-        <div style={{ display: "flex", gap: "10px" }}>
           <button
-            onClick={() => changeDirection([0, -1])}
+            onClick={() => changeDirection([-1, 0])}
             style={dpadButtonStyle}
           >
-            ⬅️
+            ⬆️
           </button>
-          <button
-            onClick={() => changeDirection([1, 0])}
-            style={dpadButtonStyle}
-          >
-            ⬇️
-          </button>
-          <button
-            onClick={() => changeDirection([0, 1])}
-            style={dpadButtonStyle}
-          >
-            ➡️
-          </button>
+          <div style={{ display: "flex", gap: "10px" }}>
+            <button
+              onClick={() => changeDirection([0, -1])}
+              style={dpadButtonStyle}
+            >
+              ⬅️
+            </button>
+            <button
+              onClick={() => changeDirection([1, 0])}
+              style={dpadButtonStyle}
+            >
+              ⬇️
+            </button>
+            <button
+              onClick={() => changeDirection([0, 1])}
+              style={dpadButtonStyle}
+            >
+              ➡️
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       <style>{`
         @keyframes pulse {
