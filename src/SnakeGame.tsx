@@ -48,6 +48,18 @@ const SnakeGame = () => {
 
   const showEasterEgg = difficulty === "dla Olisia";
 
+  useEffect(() => {
+    const unlockAudio = () => {
+      const audio = new Audio(popSfx);
+      audio.play().catch(() => {});
+      window.removeEventListener("click", unlockAudio);
+      window.removeEventListener("touchstart", unlockAudio);
+    };
+
+    window.addEventListener("click", unlockAudio);
+    window.addEventListener("touchstart", unlockAudio);
+  }, []);
+
   const restartGame = () => {
     const newSnake = initialSnake;
     setSnake(newSnake);
